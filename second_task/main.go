@@ -4,18 +4,32 @@ import (
 	"fmt"
 )
 
-// Merge принимает два read-only канала и возвращает выходной канал,
-// в который последовательно (в любом порядке) будут отправлены все значения
-// из обоих входных каналов.
-//
-// Выходной канал должен быть закрыт после того, как оба входных канала закроются.
-// Merge не должен закрывать входные каналы
-//
-// Для проверки решения запустите тесты: go test -v
 func Merge(ch1, ch2 <-chan int) <-chan int {
-	// TODO: реализуйте эту функцию
+	result := make(chan int)
 
-	return nil
+	go func() {
+		defer close(result)
+		ch1open, ch2open := true, true
+
+		for ch1open || ch2open {
+			select {
+			case val, ok := <-ch1:
+				if ok {
+					result <- val
+				} else {
+					ch1open = false
+				}
+			case val, ok := <-ch2:
+				if ok {
+					result <- val
+				} else {
+					ch2open = false
+				}
+			}
+		}
+	}()
+
+	return result
 }
 
 func main() {
